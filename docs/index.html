@@ -335,6 +335,26 @@ body {
   .deck-ui .nav-hint { display: none !important; }
 }
 
+@media (max-width: 900px) {
+  html, body {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .deck[data-mode="scroll"] {
+    width: 100%;
+    max-width: none;
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .deck[data-mode="scroll"] .slide-frame {
+    width: 100%;
+    border-radius: 4px;
+  }
+}
+
 /* ============================================================================
    Slide chrome — logo + footer (used by every non-cover layout)
    ============================================================================ */
@@ -4376,9 +4396,12 @@ body {
     const queryMode = url.searchParams.get('mode');
     let storedMode = null;
     try { storedMode = localStorage.getItem(MODE_KEY); } catch (e) { /* private/blocked */ }
-    const auto = window.matchMedia('(max-width: ' + MOBILE_BREAKPOINT + 'px)').matches
-                   ? 'scroll' : 'present';
-    setMode(deck, queryMode || storedMode || auto);
+    const isMobile = window.matchMedia('(max-width: ' + MOBILE_BREAKPOINT + 'px)').matches;
+    const auto = isMobile ? 'scroll' : 'present';
+    const resolvedMode = isMobile
+      ? (queryMode === 'present' ? 'present' : 'scroll')
+      : (queryMode || storedMode || auto);
+    setMode(deck, resolvedMode);
 
     // ---- Build UI overlay ----
     const ui = buildUI();
@@ -4553,12 +4576,11 @@ body {
     function onResize() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        // Auto-flip mode on the fly only if user hasn't pinned it
-        if (!storedMode && !queryMode) {
-          const want = window.matchMedia('(max-width: ' + MOBILE_BREAKPOINT + 'px)').matches
-                         ? 'scroll' : 'present';
-          if (deck.dataset.mode !== want) setMode(deck, want);
-        }
+        const isMobileNow = window.matchMedia('(max-width: ' + MOBILE_BREAKPOINT + 'px)').matches;
+        const want = isMobileNow
+          ? (queryMode === 'present' ? 'present' : 'scroll')
+          : (queryMode || storedMode || 'present');
+        if (deck.dataset.mode !== want) setMode(deck, want);
         frames.forEach(scaleFrame);
         updateUI(deck, frames);
         maybePortraitToast();
@@ -4640,7 +4662,16 @@ body {
     if (deck.dataset.mode === 'present') {
       scaleFrame(frames[idx]);
     } else {
-      frames[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      frames[idx].scrollIntoView({
+        behavior: updateHash === false ? 'auto' : 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+      requestAnimationFrame(() => {
+        const scroller = document.scrollingElement || document.documentElement;
+        if (scroller) scroller.scrollLeft = 0;
+        window.scrollTo({ left: 0, top: window.scrollY, behavior: 'auto' });
+      });
     }
     if (updateHash !== false) {
       const newHash = '#' + (idx + 1);
