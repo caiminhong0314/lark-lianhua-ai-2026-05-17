@@ -1,0 +1,1551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>L超市智能巡检工作台</title>
+  <style>
+    :root {
+      --bg: #eef6fb;
+      --phone: #f7fafc;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #718096;
+      --soft: #eef4f8;
+      --line: #d9e3ec;
+      --dark: #132238;
+      --brand: #0076c8;
+      --brand-2: #005aa8;
+      --sun: #ffd21a;
+      --green: #138a5b;
+      --amber: #b7791f;
+      --red: #c2413b;
+      --blue: #1769aa;
+      --shadow: 0 24px 70px rgba(27, 47, 74, .18);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(0, 118, 200, .16), transparent 32%),
+        linear-gradient(180deg, #f8fbfd 0%, var(--bg) 100%);
+    }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    [hidden] { display: none !important; }
+
+    .app-frame {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 402px) 104px;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 22px;
+      width: min(686px, 100%);
+      margin: 0 auto;
+      padding: 10px 16px 14px;
+    }
+    .app-frame::after {
+      content: "";
+      width: 104px;
+      height: 1px;
+    }
+    .role-switcher {
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 104px;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(120, 144, 165, .24);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .84);
+      box-shadow: 0 10px 28px rgba(26, 44, 68, .08);
+      backdrop-filter: blur(18px);
+      margin-top: 0;
+    }
+    .role-btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 16px;
+      color: #5d6b7c;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .role-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 8px 20px rgba(0, 118, 200, .26);
+    }
+
+    main {
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+    .phone-shell {
+      width: min(402px, 100%);
+      height: min(944px, calc(100vh - 32px));
+      min-height: min(944px, calc(100vh - 32px));
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 8px solid #0b111c;
+      border-radius: 52px;
+      background: var(--phone);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .18),
+        0 28px 80px rgba(15, 23, 42, .24);
+    }
+    .phone-status {
+      position: relative;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(255, 255, 255, .65);
+    }
+    .phone-status::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 94px;
+      height: 26px;
+      border-radius: 999px;
+      background: #111827;
+      transform: translateX(-50%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+    }
+    .signal {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .signal::before,
+    .signal::after {
+      content: "";
+      display: block;
+      border-radius: 999px;
+      background: #334155;
+    }
+    .signal::before { width: 18px; height: 7px; }
+    .signal::after { width: 22px; height: 10px; opacity: .68; }
+    .app-head {
+      position: relative;
+      padding: 18px 20px 20px;
+      color: #fff;
+      background:
+        linear-gradient(140deg, rgba(0, 118, 200, .98), rgba(0, 90, 168, .98)),
+        var(--dark);
+    }
+    .app-head::after {
+      content: "";
+      position: absolute;
+      right: -44px;
+      top: -48px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: rgba(255, 210, 26, .26);
+    }
+    .app-kicker {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      color: rgba(255, 255, 255, .72);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .app-title {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    .app-subtitle {
+      position: relative;
+      z-index: 1;
+      margin: 7px 0 0;
+      color: rgba(255, 255, 255, .76);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .phone-content {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 14px 14px;
+    }
+    .phone-footer {
+      padding: 12px 14px 18px;
+      border-top: 1px solid rgba(217, 227, 236, .82);
+      background: rgba(255, 255, 255, .9);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 0;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
+    .stat-card {
+      min-width: 0;
+      padding: 11px 8px;
+      border: 1px solid rgba(217, 227, 236, .9);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .95);
+      box-shadow: 0 12px 24px rgba(27, 47, 74, .08);
+    }
+    .stat-card span,
+    .metric-card > span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .stat-card strong,
+    .metric-card strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+    .metric-card strong span {
+      display: inline;
+      color: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 16px 2px 10px;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .section-title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .filter-panel {
+      display: grid;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 12px;
+      border: 1px solid rgba(217, 227, 236, .92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 10px 22px rgba(27, 47, 74, .05);
+    }
+    .search-box {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 0 12px;
+      color: #26364a;
+      background: #f8fbfd;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      outline: none;
+    }
+    .search-box:focus {
+      border-color: rgba(0, 118, 200, .55);
+      box-shadow: 0 0 0 3px rgba(0, 118, 200, .1);
+    }
+    .filter-row {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      flex: 0 0 auto;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 10px;
+      color: #526174;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .filter-chip.active {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 7px 16px rgba(0, 118, 200, .18);
+    }
+    .region-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      margin: 0 0 12px;
+    }
+    .region-tab {
+      min-width: 0;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 7px;
+      color: #526174;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 8px 18px rgba(27, 47, 74, .05);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .region-tab.active {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 8px 18px rgba(0, 118, 200, .22);
+    }
+    .filter-meta {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+    .empty-list {
+      padding: 24px 14px;
+      border: 1px dashed #cbd8e3;
+      border-radius: 18px;
+      color: var(--muted);
+      background: #f8fbfd;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .pill.green { color: #0f6845; background: #e7f7ef; }
+    .pill.amber { color: #8a4d00; background: #fff4dc; }
+    .pill.blue { color: #005aa8; background: #e7f3ff; }
+    .pill.red { color: #9f2f2a; background: #fff0ef; }
+    .pill.gray { color: #627083; background: #edf2f6; }
+
+    .inspection-list,
+    .rectify-list,
+    .dashboard-list {
+      display: grid;
+      gap: 10px;
+    }
+    .check-card,
+    .rectify-card,
+    .panel-card {
+      border: 1px solid rgba(217, 227, 236, .92);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 10px 22px rgba(27, 47, 74, .06);
+    }
+    .check-card { padding: 13px; }
+    .check-top,
+    .rectify-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .check-index {
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .check-name,
+    .rectify-name {
+      margin: 4px 0 0;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .check-standard,
+    .rectify-desc {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .category {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #4a5a6d;
+      background: #edf3f7;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .check-actions {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 10px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+    .photo-action,
+    .mini-photo,
+    .photo-compare {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #edf3f7;
+    }
+    .photo-action {
+      width: 82px;
+      min-height: 78px;
+      padding: 0;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .photo-action.empty {
+      display: grid;
+      place-items: center;
+      border-style: dashed;
+      background: #f8fbfd;
+    }
+    .photo-action svg,
+    .mini-photo svg,
+    .photo-compare svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .photo-action .retake {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: rgba(15, 23, 42, .48);
+      opacity: 0;
+      transition: opacity .16s ease;
+    }
+    .photo-action:hover .retake { opacity: 1; }
+    .ai-mini {
+      min-height: 78px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px 11px;
+      border-radius: 14px;
+      background: #f8fbfd;
+      border: 1px solid #e3ebf2;
+    }
+    .ai-mini strong {
+      color: #27384c;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .ai-mini span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .ai-mini.warn {
+      border-color: #f1d49b;
+      background: #fff8e8;
+    }
+    .ai-mini.loading {
+      color: var(--brand-2);
+      font-size: 12px;
+      font-weight: 900;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: .55; }
+      50% { opacity: 1; }
+    }
+    .choice-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .choice {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: #516074;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .choice.pass.active {
+      color: var(--green);
+      border-color: #9ad9ba;
+      background: #edf9f3;
+    }
+    .choice.abnormal.active {
+      color: var(--red);
+      border-color: #efb0ac;
+      background: #fff3f1;
+    }
+    .assignee {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    select {
+      max-width: 172px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 7px 8px;
+      color: #334155;
+      background: #f8fbfd;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .primary {
+      width: 100%;
+      min-height: 46px;
+      border: 0;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 12px 24px rgba(0, 118, 200, .22);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .rectify-card { padding: 13px; }
+    .rectify-code {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .owner-line {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 11px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .owner-line strong {
+      display: block;
+      margin-top: 3px;
+      color: #26364a;
+      font-size: 12px;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 11px;
+    }
+    .compare-block span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .photo-compare {
+      height: 92px;
+    }
+    .upload-after {
+      width: 100%;
+      height: 92px;
+      border: 1px dashed #c8d5e1;
+      border-radius: 14px;
+      color: #64748b;
+      background: #f8fbfd;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .rectify-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .rectify-actions.two {
+      grid-template-columns: 1fr 1fr;
+    }
+    .secondary,
+    .danger,
+    .success {
+      min-height: 38px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .secondary {
+      border: 1px solid var(--line);
+      color: #334155;
+      background: #fff;
+    }
+    .danger {
+      border: 1px solid #efb0ac;
+      color: var(--red);
+      background: #fff3f1;
+    }
+    .success {
+      border: 1px solid var(--green);
+      color: #fff;
+      background: var(--green);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 0;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
+    .metric-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid rgba(217, 227, 236, .9);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 12px 24px rgba(27, 47, 74, .08);
+    }
+    .metric-card.highlight {
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      border-color: transparent;
+    }
+    .metric-card.highlight span { color: rgba(255, 255, 255, .72); }
+    .metric-card.highlight strong { color: #fff; }
+    .mini-chart {
+      display: grid;
+      gap: 11px;
+      padding: 14px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 70px 1fr 24px;
+      gap: 8px;
+      align-items: center;
+      color: #516074;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .bar-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf3f7;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--brand), var(--sun));
+    }
+    .ai-summary {
+      padding: 15px;
+      background:
+        linear-gradient(180deg, rgba(0, 118, 200, .08), transparent 42%),
+        #fff;
+    }
+    .ai-summary h3,
+    .panel-card h3 {
+      margin: 0 0 9px;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+    .ai-summary p {
+      margin: 0 0 10px;
+      color: #516074;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .advice-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .issue-list {
+      display: grid;
+      gap: 9px;
+      margin: 12px 0;
+    }
+    .issue-card {
+      padding: 11px;
+      border: 1px solid #dce8f1;
+      border-radius: 14px;
+      background: #f8fbfd;
+    }
+    .issue-card strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #1f334a;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .issue-card span {
+      display: block;
+      color: #60718a;
+      font-size: 11px;
+      line-height: 1.55;
+      font-weight: 800;
+    }
+    .issue-card em {
+      color: var(--amber);
+      font-style: normal;
+      font-weight: 900;
+    }
+    .advice {
+      padding: 10px;
+      border-radius: 13px;
+      border: 1px solid rgba(255, 210, 26, .6);
+      background: linear-gradient(135deg, rgba(255, 210, 26, .34), rgba(0, 118, 200, .08));
+      color: #17324c;
+      font-size: 12px;
+      line-height: 1.55;
+      font-weight: 900;
+    }
+    .dashboard-task {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      align-items: center;
+      padding: 11px 13px;
+      border-top: 1px solid #edf2f7;
+      cursor: pointer;
+    }
+    .dashboard-task:hover { background: #f8fbfd; }
+    .dashboard-task:first-child { border-top: 0; }
+    .dashboard-task strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+    .dashboard-task span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      z-index: 20;
+      width: min(390px, calc(100vw - 28px));
+      padding: 12px 14px;
+      border: 1px solid rgba(120, 144, 165, .3);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.55;
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .38);
+      backdrop-filter: blur(10px);
+    }
+    .modal {
+      width: min(380px, 100%);
+      max-height: min(720px, calc(100vh - 40px));
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, .42);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 30px 90px rgba(15, 23, 42, .3);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .modal-head h3 {
+      margin: 0 0 5px;
+      font-size: 16px;
+      line-height: 1.3;
+    }
+    .modal-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .modal-close {
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 999px;
+      color: #334155;
+      background: #edf3f7;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .modal-body {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+    .modal-detail {
+      padding: 12px;
+      border-radius: 14px;
+      background: #f8fbfd;
+      color: #516074;
+      font-size: 12px;
+      line-height: 1.65;
+      font-weight: 800;
+    }
+    .modal-detail strong { color: #1f334a; }
+    .modal-photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .modal-photo span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .modal-photo-box {
+      height: 118px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #edf3f7;
+    }
+    .modal-photo-box svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .modal-empty {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      color: #8a9aab;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .green-text { color: var(--green); }
+    .amber-text { color: var(--amber); }
+    .blue-text { color: var(--blue); }
+    .red-text { color: var(--red); }
+
+    @media (max-width: 520px) {
+      .app-frame {
+        grid-template-columns: 78px minmax(0, 1fr);
+        justify-content: start;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 8px 18px;
+      }
+      .app-frame::after { display: none; }
+      .role-switcher {
+        width: 78px;
+        border-radius: 18px;
+        padding: 6px;
+        margin-top: 0;
+      }
+      .role-btn {
+        min-height: 38px;
+        border-radius: 13px;
+        font-size: 11px;
+      }
+      .phone-shell {
+        height: calc(100vh - 26px);
+        min-height: calc(100vh - 26px);
+        border-radius: 42px;
+        border-width: 6px;
+      }
+      .app-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-frame">
+    <div class="role-switcher" aria-label="切换模拟角色">
+      <button class="role-btn active" data-role="inspector">巡检员</button>
+      <button class="role-btn" data-role="owner">整改人</button>
+      <button class="role-btn" data-role="hq">总部运营</button>
+    </div>
+
+    <main>
+      <section id="inspectorView" class="phone-shell">
+      <div class="phone-status"><span>09:41</span><span class="signal"></span></div>
+      <header class="app-head">
+        <div class="app-kicker"><span>L超市</span><span>今日巡检</span></div>
+        <h1 class="app-title">L超市智能巡检工作台</h1>
+        <p class="app-subtitle">华东一区 · 中山路店 · 日常标准巡检</p>
+      </header>
+      <div class="phone-content">
+        <div class="hero-stats">
+          <div class="stat-card"><span>待检查</span><strong data-bind="todoCount">10</strong></div>
+          <div class="stat-card"><span>异常项</span><strong class="amber-text" data-bind="activeCount">0</strong></div>
+          <div class="stat-card"><span>门店分</span><strong class="green-text" data-bind="storeScore">100</strong></div>
+        </div>
+        <div class="section-title">
+          <div>
+            <h2>巡检清单</h2>
+            <p>按标准逐项拍照确认，异常自动进入整改流转</p>
+          </div>
+          <span class="pill blue">进行中</span>
+        </div>
+        <div class="filter-panel">
+          <input id="inspectionSearch" class="search-box" type="search" placeholder="搜索检查项、标准或责任人">
+          <div id="categoryFilters" class="filter-row" aria-label="巡检事项分类筛选"></div>
+          <div id="statusFilters" class="filter-row" aria-label="巡检事项状态筛选"></div>
+          <div class="filter-meta">当前显示 <span data-bind="filteredCount">10</span> / <span data-bind="todoCount">10</span> 项</div>
+        </div>
+        <div id="inspectionList" class="inspection-list"></div>
+      </div>
+      <div class="phone-footer">
+        <button id="submitInspection" class="primary">提交巡检结果</button>
+      </div>
+      </section>
+
+      <section id="ownerView" class="phone-shell" hidden>
+      <div class="phone-status"><span>09:41</span><span class="signal"></span></div>
+      <header class="app-head">
+        <div class="app-kicker"><span>L超市</span><span>整改闭环</span></div>
+        <h1 class="app-title">L超市整改任务工作台</h1>
+        <p class="app-subtitle">待处理问题、复查节点和现场照片闭环</p>
+      </header>
+      <div class="phone-content">
+        <div class="hero-stats">
+          <div class="stat-card"><span>待整改</span><strong class="amber-text" data-bind="pendingCount">0</strong></div>
+          <div class="stat-card"><span>待复查</span><strong class="blue-text" data-bind="reviewCount">0</strong></div>
+          <div class="stat-card"><span>已关闭</span><strong class="green-text" data-bind="closedCount">0</strong></div>
+        </div>
+        <div class="section-title">
+          <div>
+            <h2>问题列表</h2>
+            <p>收到的门店异常问题，按状态推进处理</p>
+          </div>
+          <span class="pill amber" data-bind-suffix="ownerFilteredCount">0项</span>
+        </div>
+        <div class="filter-panel">
+          <div id="ownerStatusFilters" class="filter-row" aria-label="整改问题处理状态筛选"></div>
+          <div class="filter-meta">当前显示 <span data-bind="ownerFilteredCount">5</span> / <span data-bind="totalAbnormal">5</span> 个问题</div>
+        </div>
+        <div id="ownerList" class="rectify-list"></div>
+      </div>
+      </section>
+
+      <section id="hqView" class="phone-shell" hidden>
+      <div class="phone-status"><span>09:41</span><span class="signal"></span></div>
+      <header class="app-head">
+        <div class="app-kicker"><span>L超市</span><span>运营看板</span></div>
+        <h1 class="app-title">L超市智能运营看板</h1>
+        <p class="app-subtitle">区域巡检质量、整改效率与 AI 复盘建议</p>
+      </header>
+      <div class="phone-content">
+        <div id="regionTabs" class="region-tabs" aria-label="选择运营大区"></div>
+        <div class="metric-grid">
+          <div class="metric-card highlight"><span>综合得分</span><strong data-bind="dashboardScore">100</strong></div>
+          <div class="metric-card"><span>闭环率</span><strong class="green-text"><span data-bind="dashboardCloseRate">100</span>%</strong></div>
+          <div class="metric-card"><span>异常总数</span><strong data-bind="dashboardTotalAbnormal">0</strong></div>
+          <div class="metric-card"><span>待处理</span><strong class="amber-text" data-bind="dashboardActiveCount">0</strong></div>
+        </div>
+
+        <div class="panel-card">
+          <div id="dashboardChart" class="mini-chart">
+          </div>
+        </div>
+
+        <div class="section-title">
+          <div>
+            <h2>整改追踪</h2>
+            <p><span data-bind="dashboardRegionName">当前区域</span>异常问题流转状态</p>
+          </div>
+        </div>
+        <div id="dashboardList" class="panel-card"></div>
+
+        <div class="section-title">
+          <div>
+            <h2>AI智能建议和总结</h2>
+            <p>根据巡检与整改数据自动生成</p>
+          </div>
+        </div>
+        <div class="panel-card ai-summary">
+          <h3 id="dashboardSummaryTitle">本周期运营复盘</h3>
+          <p id="dashboardSummaryText"></p>
+          <div id="dashboardAdviceList" class="advice-list"></div>
+          <div id="dashboardIssueList" class="issue-list"></div>
+        </div>
+      </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="taskModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="taskModalTitle">整改问题详情</h3>
+          <p id="taskModalSub">中山路店</p>
+        </div>
+        <button class="modal-close" data-action="closeModal" aria-label="关闭">×</button>
+      </div>
+      <div id="taskModalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const photoScenes = {
+      aisle: {
+        svg: '<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="220" fill="#fff8e8"/><rect y="148" width="300" height="72" fill="#d9c7a5"/><rect x="17" y="22" width="55" height="122" rx="4" fill="#4b5563"/><rect x="228" y="20" width="55" height="125" rx="4" fill="#4b5563"/><g fill="#f59e0b"><rect x="107" y="111" width="58" height="38" rx="3"/><rect x="144" y="86" width="48" height="52" rx="3"/><rect x="86" y="139" width="72" height="38" rx="3"/></g><g fill="#fff" opacity=".65"><rect x="24" y="34" width="39" height="10"/><rect x="236" y="34" width="39" height="10"/></g><path d="M40 205 C105 176 177 174 261 205" fill="none" stroke="#8b5e34" stroke-width="8" stroke-linecap="round"/></svg>'
+      },
+      shelf: {
+        svg: '<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="220" fill="#eef7ff"/><rect x="26" y="24" width="248" height="170" rx="8" fill="#3b4a5f"/><g fill="#d8e0eb"><rect x="40" y="54" width="220" height="8"/><rect x="40" y="99" width="220" height="8"/><rect x="40" y="144" width="220" height="8"/></g><g fill="#f97316"><rect x="47" y="35" width="28" height="18"/><rect x="83" y="35" width="28" height="18"/><rect x="193" y="35" width="28" height="18"/><rect x="228" y="35" width="28" height="18"/></g><g fill="#22c55e"><rect x="48" y="79" width="30" height="20"/><rect x="86" y="79" width="30" height="20"/><rect x="205" y="79" width="30" height="20"/></g><rect x="119" y="111" width="76" height="31" rx="4" fill="#111827" opacity=".38"/><g fill="#60a5fa"><rect x="49" y="125" width="25" height="18"/><rect x="78" y="125" width="25" height="18"/><rect x="210" y="125" width="25" height="18"/></g><rect x="40" y="158" width="220" height="22" fill="#111827" opacity=".18"/></svg>'
+      },
+      device: {
+        svg: '<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="220" fill="#fff3f2"/><rect x="42" y="28" width="136" height="162" rx="12" fill="#d9e2ec" stroke="#718096" stroke-width="5"/><rect x="58" y="48" width="104" height="96" rx="7" fill="#dbeafe"/><path d="M64 151h91" stroke="#718096" stroke-width="7" stroke-linecap="round"/><path d="M205 76c25 27 17 71-13 94" fill="none" stroke="#ef4444" stroke-width="9" stroke-linecap="round"/><g fill="#f59e0b"><rect x="185" y="142" width="54" height="34" rx="4"/><rect x="220" y="119" width="42" height="45" rx="4"/></g><path d="M189 178c24 12 50 12 76 0" stroke="#78350f" stroke-width="6" stroke-linecap="round"/></svg>'
+      },
+      clean: {
+        svg: '<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="220" fill="#eefbf4"/><rect y="155" width="300" height="65" fill="#d7eadf"/><g fill="#334155"><rect x="28" y="31" width="46" height="121" rx="5"/><rect x="94" y="31" width="46" height="121" rx="5"/><rect x="160" y="31" width="46" height="121" rx="5"/><rect x="226" y="31" width="46" height="121" rx="5"/></g><g fill="#fff" opacity=".88"><rect x="37" y="45" width="27" height="16"/><rect x="103" y="45" width="27" height="16"/><rect x="169" y="45" width="27" height="16"/><rect x="235" y="45" width="27" height="16"/><rect x="37" y="82" width="27" height="16"/><rect x="103" y="82" width="27" height="16"/><rect x="169" y="82" width="27" height="16"/><rect x="235" y="82" width="27" height="16"/></g><path d="M60 189c55-20 120-20 181 0" fill="none" stroke="#16a34a" stroke-width="8" stroke-linecap="round"/></svg>'
+      }
+    };
+
+    const aiMap = {
+      aisle: { tag: "通道堵塞风险", desc: "检测到通道有箱体堆放，影响顾客通行。" },
+      shelf: { tag: "排面空档", desc: "货架局部 SKU 缺失，陈列丰满度不足。" },
+      device: { tag: "设备周边杂乱", desc: "设备周边存在杂物，需清理散热区域。" }
+    };
+
+    const state = {
+      currentRole: "inspector",
+      selectedRegion: "east-1",
+      filters: {
+        query: "",
+        category: "全部",
+        status: "全部",
+        ownerStatus: "全部"
+      },
+      items: [
+        { id: 1, category: "卖场环境", name: "主通道是否通畅", standard: "无纸箱、货物、杂物堆放，保持通行宽度。", status: "PASS", assignee: "李明（理货组长）", presetType: "aisle" },
+        { id: 2, category: "货架陈列", name: "货架排面是否丰满", standard: "排面无明显空档，商品正面朝外摆放整齐。", status: "PASS", assignee: "李明（理货组长）", presetType: "shelf" },
+        { id: 3, category: "设备设施", name: "冷柜门是否及时关闭", standard: "冷柜门关闭完整，周边无水渍和杂物。", status: "PASS", assignee: "张强（值班经理）", presetType: "device" },
+        { id: 4, category: "价签规范", name: "商品价签是否一致", standard: "价签与商品一一对应，无缺失、错位、遮挡。", status: "PASS", assignee: "王芳（收银主管）", presetType: "shelf" },
+        { id: 5, category: "促销陈列", name: "端架物料是否完整", standard: "促销端架海报、爆炸签和商品组合完整。", status: "PASS", assignee: "李明（理货组长）", presetType: "shelf" },
+        { id: 6, category: "消防安全", name: "消防通道是否占用", standard: "消防通道、灭火器前方无堆物遮挡。", status: "PASS", assignee: "张强（值班经理）", presetType: "aisle" },
+        { id: 7, category: "收银服务", name: "收银台是否整洁", standard: "台面无私人物品，排队动线清晰。", status: "PASS", assignee: "王芳（收银主管）", presetType: "aisle" },
+        { id: 8, category: "生鲜标准", name: "生鲜台面是否清洁", standard: "台面无残渣积水，商品分区清晰。", status: "PASS", assignee: "赵磊（生鲜主管）", presetType: "device" },
+        { id: 9, category: "仓门管理", name: "后仓门是否关闭", standard: "后仓门保持关闭，门口无临时堆放。", status: "PASS", assignee: "张强（值班经理）", presetType: "aisle" },
+        { id: 10, category: "员工形象", name: "工服工牌是否规范", standard: "员工工服整洁，工牌佩戴位置清晰可见。", status: "PASS", assignee: "王芳（收银主管）", presetType: "shelf" }
+      ],
+      rectifications: [
+        { id: "RECT-24018", itemId: 1, itemName: "主通道是否通畅", aiTag: "通道堵塞风险", aiDesc: "检测到通道有箱体堆放，影响顾客通行。", assignee: "李明（理货组长）", photoBefore: "aisle", photoAfter: null, status: "待整改" },
+        { id: "RECT-24026", itemId: 2, itemName: "货架排面是否丰满", aiTag: "排面空档", aiDesc: "货架局部 SKU 缺失，陈列丰满度不足。", assignee: "李明（理货组长）", photoBefore: "shelf", photoAfter: null, status: "待整改" },
+        { id: "RECT-24031", itemId: 3, itemName: "冷柜门是否及时关闭", aiTag: "设备周边杂乱", aiDesc: "设备周边存在杂物，需清理散热区域。", assignee: "张强（值班经理）", photoBefore: "device", photoAfter: null, status: "待复查" },
+        { id: "RECT-24039", itemId: 6, itemName: "消防通道是否占用", aiTag: "通道占用", aiDesc: "消防通道边缘发现临时堆放物。", assignee: "张强（值班经理）", photoBefore: "aisle", photoAfter: null, status: "待整改" },
+        { id: "RECT-24045", itemId: 8, itemName: "生鲜台面是否清洁", aiTag: "台面清洁波动", aiDesc: "生鲜操作台边缘存在积水和残渣。", assignee: "赵磊（生鲜主管）", photoBefore: "device", photoAfter: "clean", status: "已关闭" }
+      ]
+    };
+
+    const regionDashboards = {
+      "east-1": {
+        name: "华东一区",
+        score: 68,
+        closeRate: 20,
+        totalAbnormal: 5,
+        activeCount: 4,
+        chart: [
+          { label: "环境", value: 86 },
+          { label: "陈列", value: 72 },
+          { label: "设备", value: 78 },
+          { label: "服务", value: 91 }
+        ],
+        summary: "系统对华东一区本轮巡检与整改流转进行复盘：当前共记录 5 个异常，其中 3 个仍处于待整改，1 个待复查，1 个已关闭。问题集中在门店动线、排面丰满度、设备周边维护和生鲜台面清洁。",
+        advice: [
+          "运营动作 1：把“主通道、消防通道”设为中山路店今日红线项，整改完成前不关闭班次巡检。",
+          "运营动作 2：对李明负责的通道堆放和排面空档做合并督导，避免同一班次重复返工。",
+          "运营动作 3：对张强负责的设备与消防问题增加复查照片要求，复查通过后同步沉淀为闭店检查模板。"
+        ],
+        issues: [
+          { store: "中山路店", name: "主通道是否通畅", status: "待整改", owner: "李明（理货组长）", desc: "通道箱体堆放影响顾客通行，属于高频环境类问题，建议在午高峰前清空临时堆放区。" },
+          { store: "中山路店", name: "货架排面是否丰满", status: "待整改", owner: "李明（理货组长）", desc: "局部 SKU 缺货导致排面空档，建议补货后由店长复核端架和主货架陈列。" },
+          { store: "中山路店", name: "冷柜门是否及时关闭", status: "待复查", owner: "张强（值班经理）", desc: "设备周边杂乱已进入复查节点，建议同步检查冷柜门闭合、积水和散热口遮挡。" },
+          { store: "中山路店", name: "消防通道是否占用", status: "待整改", owner: "张强（值班经理）", desc: "消防通道边缘存在临时堆放物，需优先处理并纳入闭店巡检留痕。" }
+        ]
+      },
+      "east-2": {
+        name: "华东二区",
+        score: 82,
+        closeRate: 63,
+        totalAbnormal: 8,
+        activeCount: 3,
+        chart: [
+          { label: "环境", value: 88 },
+          { label: "陈列", value: 84 },
+          { label: "设备", value: 76 },
+          { label: "服务", value: 89 }
+        ],
+        summary: "系统对华东二区巡检数据进行复盘：异常主要来自冷链设备维护和促销堆头补货节奏，整体闭环速度较华东一区更稳定。",
+        advice: [
+          "运营动作 1：对冷柜温控和散热区清理设置晚班复核节点。",
+          "运营动作 2：将促销堆头缺货门店纳入次日晨会追踪，按 SKU 做补货清单。",
+          "运营动作 3：保留服务项高分门店样例，供低分门店做班前培训。"
+        ],
+        issues: [
+          { store: "人民路店", name: "冷柜温度是否达标", status: "待复查", owner: "周敏（值班经理）", desc: "整改后温度趋稳，建议继续观察晚高峰开门频次。" },
+          { store: "万达广场店", name: "促销堆头是否丰满", status: "待整改", owner: "陈磊（理货组长）", desc: "堆头缺货影响活动转化，需按促销 SKU 快速补齐。" },
+          { store: "城东店", name: "仓门是否关闭", status: "已关闭", owner: "许洁（店长）", desc: "整改照片符合要求，可作为闭店检查标准案例。" }
+        ]
+      },
+      "south": {
+        name: "华南大区",
+        score: 74,
+        closeRate: 45,
+        totalAbnormal: 11,
+        activeCount: 6,
+        chart: [
+          { label: "环境", value: 79 },
+          { label: "陈列", value: 68 },
+          { label: "设备", value: 81 },
+          { label: "服务", value: 85 }
+        ],
+        summary: "系统对华南大区巡检数据进行复盘：异常数量偏高，陈列和生鲜台面清洁是当前短板，建议总部运营做专项跟进。",
+        advice: [
+          "运营动作 1：把生鲜台面清洁纳入开店、午高峰、闭店三个固定拍照点。",
+          "运营动作 2：对低于 70 分的陈列门店发起区域经理陪检。",
+          "运营动作 3：优先关闭 48 小时以上待整改问题，避免问题跨班次沉淀。"
+        ],
+        issues: [
+          { store: "天河店", name: "生鲜台面是否清洁", status: "待整改", owner: "黄欣（生鲜主管）", desc: "水渍与残渣重复出现，需增加高峰后清洁留痕。" },
+          { store: "滨江店", name: "端架物料是否完整", status: "待整改", owner: "林辉（理货组长）", desc: "活动物料缺失影响顾客识别，需补齐海报和爆炸签。" },
+          { store: "罗湖店", name: "服务台排队是否通畅", status: "待复查", owner: "梁倩（客服主管）", desc: "已调整排队线，需复查晚高峰拥堵情况。" }
+        ]
+      },
+      "north": {
+        name: "华北大区",
+        score: 90,
+        closeRate: 82,
+        totalAbnormal: 6,
+        activeCount: 1,
+        chart: [
+          { label: "环境", value: 92 },
+          { label: "陈列", value: 87 },
+          { label: "设备", value: 89 },
+          { label: "服务", value: 94 }
+        ],
+        summary: "系统对华北大区巡检数据进行复盘：整体表现稳定，闭环率高，少量待处理问题集中在消防通道临时占用。",
+        advice: [
+          "运营动作 1：把高闭环门店的复查照片要求沉淀为区域模板。",
+          "运营动作 2：对消防通道临时占用门店做闭店抽查，保持红线项稳定。",
+          "运营动作 3：保留服务项高分案例，用于新店培训和班组长复盘。"
+        ],
+        issues: [
+          { store: "朝阳路店", name: "消防通道是否占用", status: "待整改", owner: "王磊（值班经理）", desc: "临时周转箱未及时移走，需在闭店前完成清理。" },
+          { store: "海淀店", name: "收银台是否整洁", status: "已关闭", owner: "刘佳（收银主管）", desc: "整改后台面整洁，可维持现有班次自检机制。" },
+          { store: "望京店", name: "员工工牌是否规范", status: "已关闭", owner: "马宁（店长）", desc: "复查通过，建议纳入晨会提醒。" }
+        ]
+      }
+    };
+
+    state.items.forEach(item => {
+      item.photo = null;
+      item.uploading = false;
+      item.aiResult = null;
+    });
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+    const activeTasks = () => state.rectifications.filter(task => task.status !== "已关闭");
+    const closedCount = () => state.rectifications.filter(task => task.status === "已关闭").length;
+    const score = () => Math.max(60, 100 - activeTasks().length * 8);
+    const closeRate = () => state.rectifications.length === 0 ? 100 : Math.round(closedCount() / state.rectifications.length * 100);
+    const currentDashboard = () => regionDashboards[state.selectedRegion];
+    const inspectionCategories = () => ["全部", ...new Set(state.items.map(item => item.category))];
+    const inspectionStatuses = () => ["全部", "未拍照", "合格", "异常"];
+    const ownerStatuses = () => ["全部", "待整改", "待复查", "已关闭"];
+    const statusLabel = item => item.status === "ABNORMAL" ? "异常" : item.photo ? "合格" : "未拍照";
+    const filteredItems = () => {
+      const query = state.filters.query.trim().toLowerCase();
+      return state.items.filter(item => {
+        const categoryMatched = state.filters.category === "全部" || item.category === state.filters.category;
+        const statusMatched = state.filters.status === "全部" || statusLabel(item) === state.filters.status;
+        const haystack = [item.category, item.name, item.standard, item.assignee].join(" ").toLowerCase();
+        const queryMatched = !query || haystack.includes(query);
+        return categoryMatched && statusMatched && queryMatched;
+      });
+    };
+    const filteredRectifications = () => {
+      if (state.filters.ownerStatus === "全部") return state.rectifications;
+      return state.rectifications.filter(task => task.status === state.filters.ownerStatus);
+    };
+
+    function toast(message) {
+      const node = $("#toast");
+      node.textContent = message;
+      node.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => node.classList.remove("show"), 2600);
+    }
+
+    function photo(type) {
+      return photoScenes[type || "clean"].svg;
+    }
+
+    function statusPill(status) {
+      if (status === "已关闭") return '<span class="pill green">已关闭</span>';
+      if (status === "待复查") return '<span class="pill blue">待复查</span>';
+      if (status === "ABNORMAL") return '<span class="pill red">异常</span>';
+      if (status === "PASS") return '<span class="pill green">合格</span>';
+      return '<span class="pill amber">待整改</span>';
+    }
+
+    function renderInspector() {
+      const categoryFilters = $("#categoryFilters");
+      const statusFilters = $("#statusFilters");
+      categoryFilters.innerHTML = inspectionCategories().map(category => {
+        return '<button class="filter-chip ' + (state.filters.category === category ? "active" : "") + '" data-filter-type="category" data-filter-value="' + category + '">' + category + '</button>';
+      }).join("");
+      statusFilters.innerHTML = inspectionStatuses().map(status => {
+        return '<button class="filter-chip ' + (state.filters.status === status ? "active" : "") + '" data-filter-type="status" data-filter-value="' + status + '">' + status + '</button>';
+      }).join("");
+      const search = $("#inspectionSearch");
+      if (search && search.value !== state.filters.query) search.value = state.filters.query;
+
+      const visibleItems = filteredItems();
+      $("#inspectionList").innerHTML = visibleItems.length ? visibleItems.map((item) => {
+        const index = state.items.findIndex(entry => entry.id === item.id);
+        const ai = item.aiResult
+          ? '<div class="ai-mini warn"><strong>' + item.aiResult.tag + '</strong><span>' + item.aiResult.desc + '</span></div>'
+          : item.uploading
+            ? '<div class="ai-mini loading">AI正在识别现场画面</div>'
+            : '<div class="ai-mini"><strong>待拍照识别</strong><span>点击左侧拍照后，系统自动给出初判。</span></div>';
+        return '<article class="check-card" data-id="' + item.id + '">' +
+          '<div class="check-top">' +
+            '<div><span class="check-index">#' + String(index + 1).padStart(2, "0") + '</span><h2 class="check-name">' + item.name + '</h2><p class="check-standard">' + item.standard + '</p></div>' +
+            '<div>' + statusPill(item.status) + '</div>' +
+          '</div>' +
+          '<div class="check-actions">' +
+            '<button class="photo-action ' + (item.photo ? "" : "empty") + '" data-action="upload">' + (item.photo ? photo(item.photo) + '<span class="retake">重拍</span>' : '<span>拍照</span>') + '</button>' +
+            ai +
+          '</div>' +
+          '<div class="choice-row">' +
+            '<button class="choice pass ' + (item.status === "PASS" ? "active" : "") + '" data-action="pass">合格</button>' +
+            '<button class="choice abnormal ' + (item.status === "ABNORMAL" ? "active" : "") + '" data-action="abnormal">异常</button>' +
+          '</div>' +
+          (item.status === "ABNORMAL" ? '<label class="assignee">整改责任人<select data-action="assignee"><option ' + (item.assignee === "张强（值班经理）" ? "selected" : "") + '>张强（值班经理）</option><option ' + (item.assignee === "李明（理货组长）" ? "selected" : "") + '>李明（理货组长）</option><option ' + (item.assignee === "王芳（收银主管）" ? "selected" : "") + '>王芳（收银主管）</option><option ' + (item.assignee === "赵磊（生鲜主管）" ? "selected" : "") + '>赵磊（生鲜主管）</option></select></label>' : "") +
+        '</article>';
+      }).join("") : '<div class="empty-list">没有匹配的巡检事项</div>';
+    }
+
+    function renderOwner() {
+      const ownerStatusFilters = $("#ownerStatusFilters");
+      ownerStatusFilters.innerHTML = ownerStatuses().map(status => {
+        return '<button class="filter-chip ' + (state.filters.ownerStatus === status ? "active" : "") + '" data-filter-type="ownerStatus" data-filter-value="' + status + '">' + status + '</button>';
+      }).join("");
+
+      const tasks = filteredRectifications();
+      $("#ownerList").innerHTML = tasks.length ? tasks.map(task => {
+        const canSubmit = task.photoAfter && task.status === "待整改";
+        return '<article class="rectify-card" data-id="' + task.id + '">' +
+          '<div class="rectify-top">' +
+            '<div><span class="rectify-code">' + task.id + '</span><h2 class="rectify-name">' + task.itemName + '</h2><p class="rectify-desc">' + task.aiDesc + '</p></div>' +
+            statusPill(task.status) +
+          '</div>' +
+          '<div class="owner-line"><div>责任人<strong>' + task.assignee + '</strong></div><div>AI标签<strong>' + task.aiTag + '</strong></div></div>' +
+          '<div class="compare-grid">' +
+            '<div class="compare-block"><span>整改前</span><div class="photo-compare">' + photo(task.photoBefore) + '</div></div>' +
+            '<div class="compare-block"><span>整改后</span>' + (task.photoAfter ? '<div class="photo-compare">' + photo(task.photoAfter) + '</div>' : '<button class="upload-after" data-action="rectifyUpload">上传照片</button>') + '</div>' +
+          '</div>' +
+          (task.status === "待整改" ? '<div class="rectify-actions"><button class="primary" data-action="submitRectify" ' + (canSubmit ? "" : "disabled") + '>提交复查</button></div>' : '') +
+          (task.status === "待复查" ? '<div class="rectify-actions two"><button class="danger" data-action="reject">退回重改</button><button class="success" data-action="close">复查通过</button></div>' : '') +
+        '</article>';
+      }).join("") : '<div class="panel-card ai-summary"><h3>暂无匹配问题</h3><p>当前处理状态下没有对应的整改任务。</p></div>';
+    }
+
+    function renderDashboard() {
+      const dashboard = currentDashboard();
+      $("#regionTabs").innerHTML = Object.entries(regionDashboards).map(([key, region]) => {
+        return '<button class="region-tab ' + (state.selectedRegion === key ? "active" : "") + '" data-region="' + key + '">' + region.name + '</button>';
+      }).join("");
+      $("#dashboardChart").innerHTML = dashboard.chart.map(row => {
+        return '<div class="bar-row"><span>' + row.label + '</span><div class="bar-track"><div class="bar-fill" style="width: ' + row.value + '%"></div></div><b>' + row.value + '</b></div>';
+      }).join("");
+      $("#dashboardSummaryTitle").textContent = dashboard.name + "本周期运营复盘";
+      $("#dashboardSummaryText").textContent = dashboard.summary;
+      $("#dashboardAdviceList").innerHTML = dashboard.advice.map(advice => {
+        return '<div class="advice">' + advice + '</div>';
+      }).join("");
+      $("#dashboardIssueList").innerHTML = dashboard.issues.map(issue => {
+        return '<div class="issue-card">' +
+          '<strong>' + issue.store + ' · ' + issue.name + '</strong>' +
+          '<span>状态：' + (issue.status === "待整改" ? '<em>' + issue.status + '</em>' : issue.status) + '；责任人：' + issue.owner + '。' + issue.desc + '</span>' +
+        '</div>';
+      }).join("");
+      const tasks = dashboard.issues.slice(0, 5);
+      $("#dashboardList").innerHTML = tasks.map((task, index) => {
+        return '<div class="dashboard-task" data-dashboard-issue="' + index + '">' +
+          '<div><strong>' + task.name + '</strong><span>' + task.store + ' · ' + task.owner + '</span></div>' +
+          statusPill(task.status) +
+        '</div>';
+      }).join("");
+    }
+
+    function openDashboardIssue(index) {
+      const issue = currentDashboard().issues[index];
+      if (!issue) return;
+      $("#taskModalTitle").textContent = issue.name;
+      $("#taskModalSub").textContent = issue.store + " · " + currentDashboard().name + " · " + issue.status;
+      $("#taskModalBody").innerHTML =
+        '<div class="modal-detail"><strong>问题说明：</strong>' + issue.desc + '<br><strong>责任人：</strong>' + issue.owner + '<br><strong>当前状态：</strong>' + issue.status + '</div>' +
+        '<div class="modal-detail"><strong>处理建议：</strong>' + (issue.status === "已关闭" ? "该问题已完成闭环，可纳入区域整改样例。" : issue.status === "待复查" ? "请区域运营复核整改后照片与现场状态，确认无复发风险后关闭。" : "请责任人在高峰前完成整改并上传整改后照片。") + '</div>';
+      $("#taskModal").hidden = false;
+    }
+
+    function openTaskModal(taskId) {
+      const task = state.rectifications.find(entry => entry.id === taskId);
+      if (!task) return;
+      $("#taskModalTitle").textContent = task.itemName;
+      $("#taskModalSub").textContent = "中山路店 · " + task.id + " · " + task.status;
+      $("#taskModalBody").innerHTML =
+        '<div class="modal-detail"><strong>问题说明：</strong>' + task.aiDesc + '<br><strong>责任人：</strong>' + task.assignee + '<br><strong>AI识别标签：</strong>' + task.aiTag + '</div>' +
+        '<div class="modal-photos">' +
+          '<div class="modal-photo"><span>整改前现场</span><div class="modal-photo-box">' + photo(task.photoBefore) + '</div></div>' +
+          '<div class="modal-photo"><span>整改后复查</span><div class="modal-photo-box">' + (task.photoAfter ? photo(task.photoAfter) : '<div class="modal-empty">未上传</div>') + '</div></div>' +
+        '</div>' +
+        '<div class="modal-detail"><strong>处理建议：</strong>' + (task.status === "已关闭" ? "该问题已完成闭环，可纳入优秀整改样例。" : task.status === "待复查" ? "请值班经理核对整改后照片与现场状态，确认无复发风险后关闭。" : "请责任人在高峰前完成整改并上传整改后照片。") + '</div>';
+      $("#taskModal").hidden = false;
+    }
+
+    function closeTaskModal() {
+      $("#taskModal").hidden = true;
+    }
+
+    function renderBindings() {
+      const pending = state.rectifications.filter(task => task.status === "待整改").length;
+      const review = state.rectifications.filter(task => task.status === "待复查").length;
+      const values = {
+        todoCount: state.items.length,
+        filteredCount: filteredItems().length,
+        ownerFilteredCount: filteredRectifications().length,
+        activeCount: activeTasks().length,
+        pendingCount: pending,
+        reviewCount: review,
+        closedCount: closedCount(),
+        totalAbnormal: state.rectifications.length,
+        storeScore: score(),
+        closeRate: closeRate(),
+        dashboardRegionName: currentDashboard().name,
+        dashboardScore: currentDashboard().score,
+        dashboardCloseRate: currentDashboard().closeRate,
+        dashboardTotalAbnormal: currentDashboard().totalAbnormal,
+        dashboardActiveCount: currentDashboard().activeCount
+      };
+      Object.entries(values).forEach(([key, value]) => {
+        $$('[data-bind="' + key + '"]').forEach(node => node.textContent = value);
+        $$('[data-bind-suffix="' + key + '"]').forEach(node => node.textContent = value + "项");
+      });
+    }
+
+    function render() {
+      $("#inspectorView").hidden = state.currentRole !== "inspector";
+      $("#ownerView").hidden = state.currentRole !== "owner";
+      $("#hqView").hidden = state.currentRole !== "hq";
+      $$(".role-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.role === state.currentRole));
+      renderInspector();
+      renderOwner();
+      renderDashboard();
+      renderBindings();
+    }
+
+    function simulateUpload(item) {
+      item.uploading = true;
+      item.photo = null;
+      item.aiResult = null;
+      render();
+      setTimeout(() => {
+        item.uploading = false;
+        item.photo = item.presetType;
+        item.aiResult = aiMap[item.presetType];
+        item.status = "ABNORMAL";
+        render();
+      }, 800);
+    }
+
+    function submitInspection() {
+      let added = 0;
+      state.items.forEach(item => {
+        if (item.status !== "ABNORMAL") return;
+        const exists = state.rectifications.some(task => task.itemId === item.id && task.status !== "已关闭");
+        if (exists) return;
+        state.rectifications.unshift({
+          id: "RECT-" + Math.floor(Math.random() * 90000 + 10000),
+          itemId: item.id,
+          itemName: item.name,
+          aiTag: item.aiResult ? item.aiResult.tag : "人工反馈异常",
+          aiDesc: item.aiResult ? item.aiResult.desc : "巡检员人工标记为异常，请责任人跟进现场复核。",
+          assignee: item.assignee,
+          photoBefore: item.photo || item.presetType,
+          photoAfter: null,
+          status: "待整改"
+        });
+        added += 1;
+      });
+      render();
+      toast("提交成功，巡检结果已同步。");
+    }
+
+    document.addEventListener("click", event => {
+      const roleButton = event.target.closest(".role-btn");
+      if (roleButton) {
+        state.currentRole = roleButton.dataset.role;
+        render();
+        return;
+      }
+
+      const filterButton = event.target.closest(".filter-chip");
+      if (filterButton) {
+        state.filters[filterButton.dataset.filterType] = filterButton.dataset.filterValue;
+        render();
+        return;
+      }
+
+      const regionButton = event.target.closest(".region-tab");
+      if (regionButton) {
+        state.selectedRegion = regionButton.dataset.region;
+        render();
+        return;
+      }
+
+      if (event.target.closest('[data-action="closeModal"]') || event.target.id === "taskModal") {
+        closeTaskModal();
+        return;
+      }
+
+      const dashboardTask = event.target.closest(".dashboard-task");
+      if (dashboardTask) {
+        if (dashboardTask.dataset.taskId) openTaskModal(dashboardTask.dataset.taskId);
+        if (dashboardTask.dataset.dashboardIssue) openDashboardIssue(Number(dashboardTask.dataset.dashboardIssue));
+        return;
+      }
+
+      const itemNode = event.target.closest(".check-card");
+      if (itemNode) {
+        const item = state.items.find(entry => entry.id === Number(itemNode.dataset.id));
+        const action = event.target.closest("[data-action]")?.dataset.action;
+        if (action === "upload") simulateUpload(item);
+        if (action === "pass") {
+          item.status = "PASS";
+          item.aiResult = null;
+          item.uploading = false;
+          render();
+        }
+        if (action === "abnormal") {
+          item.status = "ABNORMAL";
+          item.photo = item.photo || item.presetType;
+          item.aiResult = item.aiResult || { tag: "人工反馈异常", desc: "巡检员人工标记异常，需责任人现场处理。" };
+          render();
+        }
+        return;
+      }
+
+      const taskNode = event.target.closest(".rectify-card");
+      if (taskNode) {
+        const task = state.rectifications.find(entry => entry.id === taskNode.dataset.id);
+        const action = event.target.closest("[data-action]")?.dataset.action;
+        if (action === "rectifyUpload") task.photoAfter = "clean";
+        if (action === "submitRectify" && task.photoAfter) task.status = "待复查";
+        if (action === "reject") {
+          task.status = "待整改";
+          task.photoAfter = null;
+          toast("已退回重改，整改人需重新上传照片。");
+        }
+        if (action === "close") task.status = "已关闭";
+        render();
+        return;
+      }
+
+      if (event.target.id === "submitInspection") submitInspection();
+    });
+
+    document.addEventListener("change", event => {
+      if (event.target.dataset.action !== "assignee") return;
+      const itemNode = event.target.closest(".check-card");
+      const item = state.items.find(entry => entry.id === Number(itemNode.dataset.id));
+      item.assignee = event.target.value;
+    });
+
+    document.addEventListener("input", event => {
+      if (event.target.id !== "inspectionSearch") return;
+      state.filters.query = event.target.value;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

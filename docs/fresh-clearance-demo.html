@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生鲜 AI 智能出清工作台</title>
+  <style>
+    :root {
+      --blue: #1478c9;
+      --blue-2: #0d5fa8;
+      --yellow: #ffd334;
+      --yellow-2: #f4b400;
+      --ink: #142033;
+      --muted: #667085;
+      --line: #dbe4ef;
+      --soft: #f4f8fc;
+      --panel: #ffffff;
+      --green: #13a86b;
+      --orange: #f08a24;
+      --red: #d92d20;
+      --shadow: 0 18px 48px rgba(20, 48, 86, .12);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(120deg, rgba(20,120,201,.12), transparent 32%),
+        linear-gradient(180deg, #f8fbff 0%, #eef5fb 100%);
+      min-height: 100vh;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1480px; margin: 0 auto; padding: 24px 28px 44px; }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: var(--yellow);
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      font-weight: 900;
+      box-shadow: inset 0 -7px 0 rgba(0,0,0,.08);
+    }
+    h1 { margin: 0; font-size: 30px; line-height: 1.2; letter-spacing: 0; }
+    .subtitle { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .store-box {
+      min-width: 310px;
+      border: 1px solid rgba(20,120,201,.22);
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+    .store-box strong { display: block; font-size: 15px; margin-bottom: 5px; }
+    .store-box span { color: var(--muted); font-size: 13px; }
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+    }
+    .nav button {
+      border: 1px solid transparent;
+      color: var(--muted);
+      background: transparent;
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .nav button.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+    .view { display: none; }
+    .view.active { display: grid; gap: 16px; }
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    h2 { margin: 0; font-size: 20px; line-height: 1.3; }
+    h3 { margin: 0; font-size: 16px; line-height: 1.35; }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .grid { display: grid; gap: 12px; }
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .metric {
+      min-height: 106px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-top: 4px solid var(--blue);
+    }
+    .metric .label { color: var(--muted); font-size: 13px; }
+    .metric .value { font-size: 28px; font-weight: 900; color: var(--blue-2); }
+    .metric .delta { color: var(--green); font-size: 13px; font-weight: 700; }
+    .factor {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 92px;
+    }
+    .factor span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .factor strong { display: block; font-size: 17px; line-height: 1.35; }
+    .factor p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .tag.blue { color: var(--blue-2); border-color: rgba(20,120,201,.35); background: rgba(20,120,201,.08); }
+    .tag.yellow { color: #8a5b00; border-color: rgba(255,211,52,.7); background: rgba(255,211,52,.24); }
+    .tag.green { color: #067647; border-color: rgba(19,168,107,.3); background: rgba(19,168,107,.08); }
+    .tag.orange { color: #b54708; border-color: rgba(240,138,36,.35); background: rgba(240,138,36,.1); }
+    .tag.red { color: #b42318; border-color: rgba(217,45,32,.35); background: rgba(217,45,32,.09); }
+    .control-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .control-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .control-card label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+    .segmented { display: flex; gap: 6px; flex-wrap: wrap; }
+    .segmented button {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 8px;
+      min-height: 31px;
+      padding: 0 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .segmented button.active {
+      color: #073b70;
+      border-color: var(--yellow-2);
+      background: var(--yellow);
+    }
+    .category-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .category-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-left: 5px solid var(--blue);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 126px;
+    }
+    .category-card .meta { display: flex; justify-content: space-between; gap: 8px; align-items: start; margin-bottom: 8px; }
+    .category-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .sku-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .sku-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+      min-height: 174px;
+    }
+    .sku-card .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sku-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+    .sku-title strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sku-tags {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .sku-tag {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      min-height: 32px;
+      padding: 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sku-tag.active {
+      color: #073b70;
+      border-color: var(--yellow-2);
+      background: var(--yellow);
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filters button, .primary, .ghost {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 0 12px;
+      font-weight: 800;
+      background: #fff;
+      color: var(--ink);
+    }
+    .filters button.active, .primary {
+      color: #073b70;
+      border-color: var(--yellow-2);
+      background: var(--yellow);
+    }
+    .ghost { color: var(--muted); background: var(--soft); }
+    table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; table-layout: fixed; }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 10px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.35;
+      vertical-align: middle;
+      overflow-wrap: anywhere;
+    }
+    th { color: #fff; background: var(--blue); font-weight: 900; position: static; }
+    tr:nth-child(even) td { background: #fbfdff; }
+    .table-wrap { max-height: 640px; overflow: auto; border-radius: 8px; position: relative; }
+    .name-cell { display: flex; gap: 9px; align-items: center; min-width: 182px; }
+    .mini-art {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 900;
+      flex: none;
+      line-height: 1;
+    }
+    .tag-list { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; min-width: 0; }
+    .tag-list .tag { max-width: 100%; white-space: normal; line-height: 1.2; text-align: center; }
+    .risk-table th:nth-child(1), .risk-table td:nth-child(1) { width: 17%; }
+    .risk-table th:nth-child(2), .risk-table td:nth-child(2) { width: 9%; }
+    .risk-table th:nth-child(3), .risk-table td:nth-child(3) { width: 10%; }
+    .risk-table th:nth-child(4), .risk-table td:nth-child(4) { width: 10%; }
+    .risk-table th:nth-child(5), .risk-table td:nth-child(5) { width: 8%; }
+    .risk-table th:nth-child(6), .risk-table td:nth-child(6) { width: 10%; }
+    .risk-table th:nth-child(7), .risk-table td:nth-child(7) { width: 20%; }
+    .risk-table th:nth-child(8), .risk-table td:nth-child(8) { width: 16%; }
+    .confirm-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 14px; }
+    .time-list { display: grid; gap: 8px; }
+    .time-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .time-card.active { border-color: var(--blue); box-shadow: inset 4px 0 0 var(--blue); }
+    .focus-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .focus-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .focus-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .mini-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .mini-stats div { border: 1px solid var(--line); background: var(--soft); border-radius: 8px; padding: 8px; }
+    .mini-stats span { display: block; color: var(--muted); font-size: 11px; }
+    .mini-stats strong { display: block; margin-top: 3px; font-size: 13px; }
+    .edit-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+    select, input[type="time"] {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 0 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .review-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; }
+    .day-list { display: grid; gap: 8px; max-height: 560px; overflow: auto; padding-right: 3px; }
+    .day-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 11px;
+    }
+    .day-card.active { border-color: var(--blue); box-shadow: inset 4px 0 0 var(--blue); }
+    .day-card .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .learning-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .bar { height: 9px; border-radius: 999px; background: #e6edf5; overflow: hidden; margin: 8px 0 5px; }
+    .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--blue), var(--yellow)); border-radius: 999px; }
+    .manual-review {
+      margin-top: 14px;
+      border: 1px solid rgba(20,120,201,.28);
+      background: linear-gradient(180deg, #f8fbff, #fff);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .manual-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 12px; margin-top: 10px; }
+    .review-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .review-tag {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      min-height: 34px;
+      padding: 0 11px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .review-tag.active {
+      color: #073b70;
+      border-color: var(--yellow-2);
+      background: var(--yellow);
+    }
+    .review-note {
+      width: 100%;
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      resize: vertical;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.5;
+    }
+    .impact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .impact-card {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .impact-card span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .impact-card strong { font-size: 16px; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(10, 31, 55, .42);
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: min(720px, 96vw);
+      max-height: 88vh;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.4);
+      background: #fff;
+      box-shadow: 0 28px 90px rgba(0,0,0,.24);
+    }
+    .modal-head {
+      padding: 18px;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+    .modal-body { padding: 18px; display: grid; gap: 12px; }
+    .notice {
+      border: 1px solid rgba(255,211,52,.7);
+      background: rgba(255,211,52,.18);
+      border-radius: 8px;
+      padding: 12px;
+      color: #6f4b00;
+      font-weight: 800;
+    }
+    @media (max-width: 1100px) {
+      .topbar, .confirm-layout, .review-layout { grid-template-columns: 1fr; }
+      .cols-6, .cols-4, .cols-3, .cols-2, .control-grid, .category-grid, .sku-grid, .focus-grid, .compare-grid, .learning-grid, .manual-grid, .impact-grid { grid-template-columns: 1fr; }
+      .app { padding: 18px; }
+      th { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div class="brand">
+        <div class="logo-mark">L</div>
+        <div>
+          <h1>生鲜 AI 智能出清工作台</h1>
+          <p class="subtitle">系统识别风险，门店补充现场判断，按时点批量推送出清确认，闭店复盘持续学习。</p>
+        </div>
+      </div>
+      <div class="store-box">
+        <strong>L超市 · 长宁路店</strong>
+        <span>2026-05-20 周三 · 08:00-22:00 · 生鲜经营晨会 08:35 完成</span>
+      </div>
+    </section>
+
+    <nav class="nav" aria-label="demo navigation">
+      <button class="active" data-view="overview">今日经营环境</button>
+      <button data-view="risk">库存风险池</button>
+      <button data-view="confirm">分时出清确认</button>
+      <button data-view="review">复盘学习</button>
+    </nav>
+
+    <section id="overview" class="view active">
+      <div class="grid cols-4">
+        <div class="panel metric"><span class="label">今日扫描 SKU</span><span class="value">50</span><span class="delta">覆盖 12 个生鲜品类</span></div>
+        <div class="panel metric"><span class="label">需出清确认</span><span class="value" id="needCount">18</span><span class="delta">按 14/16/18/20 点分批推送</span></div>
+        <div class="panel metric"><span class="label">预计可减少损耗</span><span class="value">¥4,860</span><span class="delta">相对不干预方案 -21%</span></div>
+        <div class="panel metric"><span class="label">毛利保护目标</span><span class="value">+3.8%</span><span class="delta">避免过早深折扣</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>全局经营因素</h2>
+          <span class="hint">来自天气、节假日、商圈、总部促销、竞品与供应链系统，统一影响全店生鲜销量速度。</span>
+        </div>
+        <div class="grid cols-6" id="environmentFactors"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>门店级现场输入</h2>
+          <span class="hint">限制为 6 个会影响全店生鲜销售速度的条件，选择后用于修正出清时点和折扣深度。</span>
+        </div>
+        <div class="control-grid" id="storeInputs"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>今日筛选 SKU</h2>
+          <span class="hint">系统筛出需要关注的具体 SKU；每个 SKU 保留 3 个核心标签，可点击调整。</span>
+        </div>
+        <div class="sku-grid" id="overviewSkuGrid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>品类 / SKU 同步标签</h2>
+          <span class="hint">这些标签来自生鲜管理系统，统一使用“是否”逻辑，AI 根据标签调整出清时点。</span>
+        </div>
+        <div class="grid cols-3" id="tagLogic"></div>
+      </div>
+    </section>
+
+    <section id="risk" class="view">
+      <div class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>生鲜库存风险池 · 50 个 SKU</h2>
+            <span class="hint">按照风险等级排序，重点关注高风险、预警和销量置信度低的品项。</span>
+          </div>
+          <div class="filters" id="riskFilters">
+            <button class="active" data-filter="all">全部</button>
+            <button data-filter="高风险">高风险</button>
+            <button data-filter="预警">预警</button>
+            <button data-filter="关注">关注</button>
+            <button data-filter="正常">正常</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="risk-table">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>品类</th>
+                <th>销量 / 库存</th>
+                <th>价格 / 成本</th>
+                <th>可售时间</th>
+                <th>风险</th>
+                <th>系统标签</th>
+                <th>AI 出清建议</th>
+              </tr>
+            </thead>
+            <tbody id="riskRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="confirm" class="view">
+      <div class="confirm-layout">
+        <div class="panel">
+          <div class="section-title">
+            <h2>时点推送</h2>
+          </div>
+          <div class="time-list" id="timeList"></div>
+          <button class="primary" id="pushBtn" style="width:100%; margin-top:12px;">推送 16:00 出清确认</button>
+        </div>
+        <div class="panel">
+          <div class="section-title">
+            <h2 id="confirmTitle">16:00 出清确认清单</h2>
+            <span class="hint">重点 SKU 展示完整经营要素，普通 SKU 按常规逻辑批量确认。</span>
+          </div>
+          <div class="focus-grid" id="focusCards"></div>
+          <div style="margin-top:14px;">
+            <h3>普通出清 SKU</h3>
+            <p class="hint">以下品项按常规逻辑执行，可在推送卡片中批量调整，也可以单独取消。</p>
+            <div class="table-wrap" style="max-height:260px; margin-top:10px;">
+              <table>
+                <thead>
+                  <tr><th>SKU</th><th>品类</th><th>销量 / 库存</th><th>建议</th><th>是否出清</th></tr>
+                </thead>
+                <tbody id="normalConfirmRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="review" class="view">
+      <div class="grid cols-6">
+        <div class="panel metric"><span class="label">利润率提升天数</span><span class="value">21</span><span class="delta">30 天中 70%</span></div>
+        <div class="panel metric"><span class="label">利润率降低天数</span><span class="value">5</span><span class="delta" style="color:var(--orange)">主要因执行延迟</span></div>
+        <div class="panel metric"><span class="label">基本持平天数</span><span class="value">4</span><span class="delta">波动 ±0.3%</span></div>
+        <div class="panel metric"><span class="label">整体利润率提升</span><span class="value">+2.6%</span><span class="delta">人工修正优于原始系统</span></div>
+        <div class="panel metric"><span class="label">损耗金额下降</span><span class="value">-18%</span><span class="delta">叶菜与鲜切改善明显</span></div>
+        <div class="panel metric"><span class="label">执行准时率</span><span class="value">86%</span><span class="delta">晚高峰前执行最好</span></div>
+      </div>
+      <div class="review-layout">
+        <div class="panel">
+          <div class="section-title">
+            <h2>近 30 天复盘清单</h2>
+          </div>
+          <div class="day-list" id="dayList"></div>
+        </div>
+        <div class="panel">
+          <div class="section-title">
+            <h2 id="dayTitle">单日复盘详情</h2>
+            <span class="tag green" id="dayResult">利润率提升</span>
+          </div>
+          <div class="compare-grid" id="dayCompare"></div>
+          <div style="margin-top:14px;">
+            <h3>重点 SKU 与普通 SKU 效果</h3>
+            <div class="table-wrap" style="max-height:260px; margin-top:10px;">
+              <table>
+                <thead><tr><th>范围</th><th>动作</th><th>系统原建议利润率</th><th>人工调整后利润率</th><th>原因</th></tr></thead>
+                <tbody id="dayDetailRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="manual-review">
+            <div class="section-title" style="margin-bottom:0;">
+              <div>
+                <h3>人工复盘输入</h3>
+                <span class="hint">把当天真实现场原因沉淀为后续该门店预测方案的调优因素。</span>
+              </div>
+              <button class="primary" id="saveManualReview">纳入下次预测</button>
+            </div>
+            <div class="manual-grid">
+              <div>
+                <span class="hint">选择需要综合考虑的维度</span>
+                <div class="review-tags" id="manualReviewTags" style="margin-top:8px;"></div>
+                <textarea class="review-note" id="manualReviewNote" style="margin-top:10px;">晚高峰客流比系统预测更集中，水果主陈列位置较好；水产受竞品临时促销影响，16:00 后转化明显低于预期。后续建议提高“陈列资源”和“竞品价格动态”对本门店出清时点的影响权重。</textarea>
+              </div>
+              <div>
+                <span class="hint">沉淀后的预测修正</span>
+                <div class="impact-grid" id="manualImpactGrid" style="margin-top:8px;"></div>
+                <p class="hint" id="manualReviewResult" style="margin:10px 0 0;">当前已选择 4 个维度，建议作为本门店后续 14 天的预测修正样本。</p>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <h3>长期学习看板与下一步建议</h3>
+            <div class="learning-grid" id="learningGrid" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="pushModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">16:00 出清确认推送</h2>
+          <div style="font-size:13px; opacity:.86;">已生成门店待确认消息，可发送至生鲜经理与值班店长。</div>
+        </div>
+        <button class="ghost" id="closeModal">关闭</button>
+      </div>
+      <div class="modal-body">
+        <div class="notice">本时点共 11 个 SKU 需要确认，其中 3 个为重点 SKU。低于 7 折需店长确认，低于成本价禁止推荐。</div>
+        <div id="modalItems"></div>
+        <div class="grid cols-3">
+          <button class="primary">发送给生鲜经理</button>
+          <button class="ghost">同步给值班店长</button>
+          <button class="ghost">保存为待执行任务</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const envFactors = [
+      ["天气", "小雨转多云 · 23°C", "午后客流略降，叶菜、水产转化放缓"],
+      ["大型节日 / 活动", "周边社区市集", "17:30 后家庭客流预计增加"],
+      ["商圈客流预测", "较常规周三 +8%", "晚高峰强于午高峰"],
+      ["总部促销日历", "水果满 39 减 5", "水果类出清可先控制折扣深度"],
+      ["竞品价格动态", "附近门店水产 8.8 折", "水产深折扣触发阈值提前"],
+      ["供应链 / 到货", "叶菜到货 +18%", "叶菜库存水位偏高"],
+      ["历史同周基线", "周三鲜切 16:00 后下滑", "鲜切需提前观察"],
+      ["昨日遗留库存", "熟食、豆制品偏高", "普通 SKU 进入批量复查"]
+    ];
+
+    const categoryRules = [
+      ["水果", 8, "库存高于历史均值、总部促销叠加，需避免过早深折扣"],
+      ["叶菜", 6, "到货偏多、保鲜窗口短、雨天影响购买频次"],
+      ["根茎菜", 4, "库存水位中等，但单品周转速度分化明显"],
+      ["鲜切水果", 5, "短保商品，午后销量低于预测时损耗放大"],
+      ["水产", 4, "高客单高损耗，竞品价格变化影响明显"],
+      ["肉禽", 4, "毛利敏感，深折扣需要更强确认机制"],
+      ["熟食", 4, "晚高峰波动大，适合按时点出清"],
+      ["烘焙", 3, "闭店前集中出清，需关注时段售罄率"],
+      ["沙拉轻食", 3, "午间过后销售快速下降，短保风险高"],
+      ["豆制品", 3, "低单价高周转，适合普通 SKU 批量策略"],
+      ["日配短保", 4, "保质期临近、组合促销空间较大"],
+      ["预制菜 / 半成品", 2, "客单高但销量不稳定，需关注节假日需求"]
+    ];
+
+    const storeInputs = [
+      ["今日客流预期", ["高", "正常", "低"], "高"],
+      ["陈列资源", ["主堆头充足", "正常", "紧张"], "主堆头充足"],
+      ["门店人手", ["充足", "正常", "不足"], "正常"],
+      ["促销执行能力", ["强", "正常", "弱"], "强"],
+      ["收货质量整体判断", ["好", "一般", "差"], "一般"],
+      ["品控 / 客诉风险", ["低", "中", "高"], "中"]
+    ];
+
+    const tagGroups = [
+      ["库存与时效", ["是否临期", "是否库存高于历史均值", "是否今日到货偏多", "是否昨日遗留偏高"]],
+      ["现场经营", ["是否主陈列", "是否有堆头", "是否安排试吃叫卖", "是否可组合售卖"]],
+      ["风险约束", ["是否竞品低价影响", "是否毛利敏感", "是否高客单商品", "是否需要人工复核"]]
+    ];
+
+    const names = [
+      ["草莓 250g","水果","草"],["蓝莓盒装","水果","蓝"],["台农芒果","水果","芒"],["阳光玫瑰","水果","葡"],["香蕉","水果","蕉"],["沃柑","水果","柑"],["车厘子","水果","车"],["小番茄","水果","番"],
+      ["菠菜","叶菜","菠"],["油麦菜","叶菜","油"],["生菜","叶菜","生"],["上海青","叶菜","青"],["娃娃菜","叶菜","娃"],["香菜","叶菜","香"],
+      ["土豆","根茎菜","土"],["胡萝卜","根茎菜","胡"],["莲藕","根茎菜","藕"],["山药","根茎菜","山"],
+      ["鲜切西瓜","鲜切水果","瓜"],["鲜切哈密瓜","鲜切水果","哈"],["混合果盒","鲜切水果","果"],["鲜切菠萝","鲜切水果","菠"],
+      ["三文鱼刺身","水产","鱼"],["基围虾","水产","虾"],["鲈鱼","水产","鲈"],["蛤蜊","水产","蛤"],
+      ["冷鲜牛肉片","肉禽","牛"],["鸡胸肉","肉禽","鸡"],["精品五花肉","肉禽","肉"],["羊肉卷","肉禽","羊"],
+      ["熟食烤鸡","熟食","熟"],["卤牛肉","熟食","卤"],["红烧排骨","熟食","排"],["凉拌菜组合","熟食","凉"],
+      ["法棍面包","烘焙","包"],["吐司切片","烘焙","吐"],["蛋挞盒装","烘焙","挞"],
+      ["即食沙拉","沙拉轻食","沙"],["鸡胸肉沙拉","沙拉轻食","轻"],["低脂餐盒","沙拉轻食","餐"],
+      ["盒装嫩豆腐","豆制品","豆"],["千张","豆制品","千"],["豆干","豆制品","干"],
+      ["鲜牛奶 950ml","日配短保","奶"],["酸奶组合","日配短保","酸"],["鲜榨橙汁","日配短保","汁"],["冷藏面条","日配短保","面"],
+      ["冷藏披萨","预制菜 / 半成品","披"],["黑椒牛柳包","预制菜 / 半成品","柳"],["咖喱鸡肉饭","预制菜 / 半成品","咖"]
+    ];
+
+    const products = names.map((item, i) => {
+      const baseRisk = [92,88,83,79,74,71,68,63,86,81,76,72,69,58,54,47,43,36,90,84,78,70,94,82,73,61,89,77,67,55,80,75,65,52,46,42,38,87,73,60,62,51,44,66,59,49,41,57,53,35][i];
+      const stock = 18 + ((i * 13) % 92);
+      const sold = 5 + ((i * 7) % 46);
+      const cost = +(2.2 + ((i * 3.7) % 38)).toFixed(1);
+      const price = +(cost * (1.72 + ((i % 5) * .13))).toFixed(1);
+      const status = baseRisk >= 80 ? "高风险" : baseRisk >= 65 ? "预警" : baseRisk >= 45 ? "关注" : "正常";
+      const time = baseRisk >= 80 ? "16:00" : baseRisk >= 65 ? "18:00" : baseRisk >= 45 ? "20:00" : "观察";
+      const discount = baseRisk >= 85 ? "8 折" : baseRisk >= 75 ? "8.5 折" : baseRisk >= 65 ? "9 折" : baseRisk >= 45 ? "复查" : "不出清";
+      const tagPool = [
+        baseRisk >= 70 ? "是否库存高于历史均值" : "是否昨日遗留偏高",
+        i % 3 === 0 ? "是否临期" : "是否今日到货偏多",
+        i % 4 === 0 ? "是否主陈列" : "是否有堆头",
+        i % 5 === 0 ? "是否竞品低价影响" : "是否可组合售卖",
+        item[1].includes("水产") || item[1].includes("肉禽") ? "是否高客单商品" : "是否需要人工复核",
+        baseRisk >= 80 ? "是否毛利敏感" : "是否安排试吃叫卖"
+      ];
+      return { id: `sku-${i}`, name: item[0], category: item[1], short: item[2], stock, sold, cost, price, hours: 4 + (i % 14), risk: baseRisk, status, time, discount, tags: tagPool, activeTags: tagPool.slice(0, 3) };
+    }).sort((a, b) => b.risk - a.risk);
+
+    const timeNodes = ["14:00", "16:00", "18:00", "20:00"];
+    let currentTime = "16:00";
+    let currentFilter = "all";
+    const manualReviewFactors = [
+      ["晚高峰客流", "上调", "影响水果、熟食和鲜切晚间销量"],
+      ["陈列资源", "上调", "主堆头会推迟轻折扣启动"],
+      ["竞品价格", "上调", "水产、肉禽需提前识别周边低价"],
+      ["收货品质", "上调", "品相差时缩短观察窗口"],
+      ["执行准时率", "保留", "延迟执行会削弱系统建议效果"],
+      ["天气影响", "保留", "雨天对叶菜和水产转化影响明显"],
+      ["总部促销", "保留", "促销品先控制折扣深度"],
+      ["普通 SKU 批量策略", "下调", "低风险品减少人工确认频次"]
+    ];
+    let selectedManualFactors = ["晚高峰客流", "陈列资源", "竞品价格", "收货品质"];
+
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const day = 20 - i;
+      const lift = +(3.8 - (i % 9) * .55 + (i % 4) * .2).toFixed(1);
+      const positive = lift > .3;
+      return {
+        date: `2026-05-${String(day).padStart(2, "0")}`,
+        lift,
+        result: positive ? "利润率提升" : lift < -.3 ? "利润率降低" : "基本持平",
+        waste: 8 + (i % 8) * 2,
+        execution: 92 - (i % 7) * 3
+      };
+    });
+    let currentDay = days[0];
+
+    const riskClass = (status) => status === "高风险" ? "red" : status === "预警" ? "orange" : status === "关注" ? "yellow" : "green";
+    const shortTag = (tag) => tag
+      .replace("是否库存高于历史均值", "库存高于均值")
+      .replace("是否昨日遗留偏高", "昨日遗留偏高")
+      .replace("是否今日到货偏多", "到货偏多")
+      .replace("是否竞品低价影响", "竞品低价")
+      .replace("是否可组合售卖", "可组合")
+      .replace("是否需要人工复核", "需复核")
+      .replace("是否高客单商品", "高客单")
+      .replace("是否安排试吃叫卖", "试吃叫卖")
+      .replace("是否毛利敏感", "毛利敏感")
+      .replace("是否主陈列", "主陈列")
+      .replace("是否有堆头", "有堆头")
+      .replace("是否临期", "临期");
+
+    function showView(id) {
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === id));
+      document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.view === id));
+      if (location.hash !== `#${id}`) history.replaceState(null, "", `#${id}`);
+    }
+
+    function renderOverview() {
+      document.getElementById("environmentFactors").innerHTML = envFactors.map(f => `
+        <div class="factor"><span>${f[0]}</span><strong>${f[1]}</strong><p>${f[2]}</p></div>
+      `).join("");
+      renderOverviewSkus();
+      document.getElementById("needCount").textContent = products.filter(p => p.status === "高风险" || p.status === "预警").length;
+    }
+
+    function renderOverviewSkus() {
+      const skus = products.filter(p => p.status === "高风险" || p.status === "预警").slice(0, 12);
+      document.getElementById("overviewSkuGrid").innerHTML = skus.map(p => `
+        <article class="sku-card">
+          <div class="head">
+            <div class="sku-title"><span class="mini-art">${p.short}</span><div><strong>${p.name}</strong><span class="hint">${p.category} · ${p.time} ${p.discount}</span></div></div>
+            <span class="tag ${riskClass(p.status)}">${p.status}</span>
+          </div>
+          <div class="mini-stats">
+            <div><span>销量</span><strong>${p.sold}</strong></div>
+            <div><span>库存</span><strong>${p.stock}</strong></div>
+            <div><span>可售</span><strong>${p.hours}h</strong></div>
+            <div><span>风险</span><strong>${p.risk}</strong></div>
+          </div>
+          <div class="sku-tags">
+            ${p.tags.slice(0, 5).map(tag => `<button class="sku-tag ${p.activeTags.includes(tag) ? "active" : ""}" data-sku="${p.id}" data-tag="${tag}" title="${tag}">${shortTag(tag)}</button>`).join("")}
+          </div>
+        </article>
+      `).join("");
+      document.querySelectorAll(".sku-tag").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const sku = products.find(p => p.id === btn.dataset.sku);
+          if (sku.activeTags.includes(btn.dataset.tag)) {
+            sku.activeTags = sku.activeTags.filter(tag => tag !== btn.dataset.tag);
+          } else if (sku.activeTags.length < 3) {
+            sku.activeTags.push(btn.dataset.tag);
+          } else {
+            sku.activeTags = [sku.activeTags[1], sku.activeTags[2], btn.dataset.tag];
+          }
+          renderOverviewSkus();
+          renderRisk();
+        });
+      });
+    }
+
+    function renderStore() {
+      document.getElementById("storeInputs").innerHTML = storeInputs.map((input, idx) => `
+        <div class="control-card">
+          <label>${input[0]}</label>
+          <div class="segmented">${input[1].map(opt => `<button class="${opt === input[2] ? "active" : ""}" data-store="${idx}" data-option="${opt}">${opt}</button>`).join("")}</div>
+        </div>
+      `).join("");
+      document.querySelectorAll("[data-store]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          storeInputs[Number(btn.dataset.store)][2] = btn.dataset.option;
+          renderStore();
+        });
+      });
+      document.getElementById("tagLogic").innerHTML = tagGroups.map(g => `
+        <div class="panel" style="box-shadow:none;">
+          <h3>${g[0]}</h3>
+          <div class="tag-list" style="margin-top:10px;">${g[1].map(t => `<span class="tag blue">${t}</span>`).join("")}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRisk() {
+      const rows = products.filter(p => currentFilter === "all" || p.status === currentFilter);
+      document.getElementById("riskRows").innerHTML = rows.map(p => `
+        <tr>
+          <td><div class="name-cell"><span class="mini-art">${p.short}</span><strong>${p.name}</strong></div></td>
+          <td>${p.category}</td>
+          <td>${p.sold} / ${p.stock}</td>
+          <td>¥${p.price} / ¥${p.cost}</td>
+          <td>${p.hours} 小时</td>
+          <td><span class="tag ${riskClass(p.status)}">${p.status} · ${p.risk}</span></td>
+          <td><div class="tag-list">${p.activeTags.map(t => `<span class="tag">${shortTag(t)}</span>`).join("")}</div></td>
+          <td>${p.time === "观察" ? "保持原价，闭店前复核" : `${p.time} 起 ${p.discount}`}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderConfirm() {
+      document.getElementById("timeList").innerHTML = timeNodes.map(t => {
+        const count = products.filter(p => p.time === t).length;
+        return `<div class="time-card ${t === currentTime ? "active" : ""}" data-time="${t}">
+          <div style="display:flex; justify-content:space-between; gap:8px;"><strong>${t}</strong><span class="tag blue">${count} 个 SKU</span></div>
+          <p class="hint" style="margin:7px 0 0;">${t === "14:00" ? "提前观察，避免午后积压" : t === "16:00" ? "晚高峰前重点确认" : t === "18:00" ? "根据晚高峰销量修正" : "闭店前最后出清"}</p>
+        </div>`;
+      }).join("");
+      document.querySelectorAll("[data-time]").forEach(card => {
+        card.addEventListener("click", () => {
+          currentTime = card.dataset.time;
+          renderConfirm();
+        });
+      });
+      const batch = products.filter(p => p.time === currentTime || (currentTime === "16:00" && p.status === "高风险")).slice(0, 12);
+      const focus = batch.slice(0, 3);
+      const normal = batch.slice(3);
+      document.getElementById("confirmTitle").textContent = `${currentTime} 出清确认清单`;
+      document.getElementById("focusCards").innerHTML = focus.map((p, idx) => `
+        <article class="focus-card">
+          <div class="focus-head"><h3>${p.name}</h3><span class="tag ${riskClass(p.status)}">${p.status}</span></div>
+          <div class="mini-stats">
+            <div><span>销量</span><strong>${p.sold}</strong></div>
+            <div><span>库存</span><strong>${p.stock}</strong></div>
+            <div><span>价格</span><strong>¥${p.price}</strong></div>
+            <div><span>成本</span><strong>¥${p.cost}</strong></div>
+          </div>
+          <p class="hint">${idx === 0 ? "销量低于预测且库存偏高，建议先 8 折并保留毛利底线。" : idx === 1 ? "受竞品与短保影响，建议提前进入轻折扣观察。" : "品相和陈列会显著影响售罄，建议门店确认后执行。"}</p>
+          <div class="edit-row">
+            <input type="time" value="${currentTime}">
+            <select><option>${p.discount}</option><option>9 折</option><option>8.5 折</option><option>8 折</option><option>不出清</option></select>
+            <label class="tag"><input type="checkbox" checked> 出清</label>
+          </div>
+        </article>
+      `).join("");
+      document.getElementById("normalConfirmRows").innerHTML = normal.map(p => `
+        <tr>
+          <td><div class="name-cell"><span class="mini-art">${p.short}</span><strong>${p.name}</strong></div></td>
+          <td>${p.category}</td>
+          <td>${p.sold} / ${p.stock}</td>
+          <td>${p.time} 起 ${p.discount}，按常规逻辑出清</td>
+          <td><input type="checkbox" checked aria-label="${p.name} 是否出清"></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderModal() {
+      const focus = products.filter(p => p.time === currentTime || (currentTime === "16:00" && p.status === "高风险")).slice(0, 5);
+      document.getElementById("modalTitle").textContent = `${currentTime} 出清确认推送`;
+      document.getElementById("modalItems").innerHTML = focus.map(p => `
+        <div class="factor" style="min-height:auto;">
+          <span>${p.category} · ${p.status}</span>
+          <strong>${p.name}：销量 ${p.sold} / 库存 ${p.stock}，建议 ${p.time} 起 ${p.discount}</strong>
+          <p>系统依据库存水位、剩余可售时间、今日门店输入和毛利底线生成该建议。</p>
+        </div>
+      `).join("");
+    }
+
+    function renderReview() {
+      document.getElementById("dayList").innerHTML = days.map(d => `
+        <div class="day-card ${d.date === currentDay.date ? "active" : ""}" data-day="${d.date}">
+          <div class="row"><strong>${d.date}</strong><span class="tag ${d.lift > .3 ? "green" : d.lift < -.3 ? "red" : "yellow"}">${d.result}</span></div>
+          <p class="hint" style="margin:7px 0 0;">人工调整后利润率 ${d.lift > 0 ? "+" : ""}${d.lift}% · 损耗下降 ${d.waste}% · 执行准时率 ${d.execution}%</p>
+        </div>
+      `).join("");
+      document.querySelectorAll("[data-day]").forEach(card => {
+        card.addEventListener("click", () => {
+          currentDay = days.find(d => d.date === card.dataset.day);
+          renderReview();
+        });
+      });
+      document.getElementById("dayTitle").textContent = `${currentDay.date} 复盘详情`;
+      document.getElementById("dayResult").textContent = currentDay.result;
+      document.getElementById("dayResult").className = `tag ${currentDay.lift > .3 ? "green" : currentDay.lift < -.3 ? "red" : "yellow"}`;
+      document.getElementById("dayCompare").innerHTML = `
+        <div class="factor"><span>系统原始建议</span><strong>16:00 前启动 8 折</strong><p>偏保守，能降低损耗但可能牺牲晚高峰毛利。</p></div>
+        <div class="factor"><span>人工修正建议</span><strong>重点 SKU 延后，普通 SKU 批量执行</strong><p>结合客流高、主陈列充足和品相判断。</p></div>
+        <div class="factor"><span>实际结果</span><strong>利润率 ${currentDay.lift > 0 ? "+" : ""}${currentDay.lift}%</strong><p>损耗下降 ${currentDay.waste}%，执行准时率 ${currentDay.execution}%。</p></div>
+      `;
+      document.getElementById("dayDetailRows").innerHTML = [
+        ["整体", "高风险 SKU 16:00 推送，预警 SKU 18:00 复查", "21.4%", `${(21.4 + currentDay.lift).toFixed(1)}%`, "门店客流判断提升了出清时点准确性"],
+        ["重点 SKU", "草莓、三文鱼、鲜切西瓜单独确认", "18.8%", `${(18.8 + currentDay.lift + .9).toFixed(1)}%`, "主陈列和品相输入让部分折扣延后"],
+        ["普通 SKU", "叶菜、豆制品、烘焙按常规策略批量执行", "20.7%", `${(20.7 + currentDay.lift - .4).toFixed(1)}%`, "执行效率高，但个别 SKU 可减少人工干预"]
+      ].map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
+      const learn = [
+        ["客流判断权重", 82, "继续保留，晚高峰预测有效"],
+        ["品相判断权重", 76, "水果与鲜切建议上调"],
+        ["竞品影响权重", 69, "水产类样本不足，继续观察"],
+        ["执行准时率影响", 86, "延迟超过 30 分钟会显著降低效果"]
+      ];
+      document.getElementById("learningGrid").innerHTML = learn.map(l => `
+        <div class="factor"><span>${l[0]}</span><strong>${l[1]}%</strong><div class="bar"><i style="width:${l[1]}%"></i></div><p>${l[2]}</p></div>
+      `).join("");
+      renderManualReview();
+    }
+
+    function renderManualReview() {
+      const tagBox = document.getElementById("manualReviewTags");
+      if (!tagBox) return;
+      tagBox.innerHTML = manualReviewFactors.map(f => `
+        <button class="review-tag ${selectedManualFactors.includes(f[0]) ? "active" : ""}" data-review-factor="${f[0]}">${f[0]}</button>
+      `).join("");
+      document.querySelectorAll("[data-review-factor]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const factor = btn.dataset.reviewFactor;
+          selectedManualFactors = selectedManualFactors.includes(factor)
+            ? selectedManualFactors.filter(item => item !== factor)
+            : [...selectedManualFactors, factor];
+          renderManualReview();
+        });
+      });
+      const chosen = manualReviewFactors.filter(f => selectedManualFactors.includes(f[0])).slice(0, 3);
+      document.getElementById("manualImpactGrid").innerHTML = chosen.map(f => `
+        <div class="impact-card"><span>${f[0]}</span><strong>建议${f[1]}权重</strong><p class="hint" style="margin:6px 0 0;">${f[2]}</p></div>
+      `).join("") || `<div class="impact-card"><span>未选择维度</span><strong>暂不调整</strong><p class="hint" style="margin:6px 0 0;">需要选择至少 1 个复盘因素。</p></div>`;
+      document.getElementById("manualReviewResult").textContent = selectedManualFactors.length
+        ? `当前已选择 ${selectedManualFactors.length} 个维度，建议作为本门店后续 14 天的预测修正样本。`
+        : "当前未选择复盘维度，系统不会调整该门店预测权重。";
+    }
+
+    document.querySelectorAll(".nav button").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
+    document.querySelectorAll("#riskFilters button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll("#riskFilters button").forEach(b => b.classList.toggle("active", b === btn));
+        renderRisk();
+      });
+    });
+    document.getElementById("pushBtn").addEventListener("click", () => {
+      renderModal();
+      document.getElementById("pushModal").classList.add("show");
+    });
+    document.getElementById("closeModal").addEventListener("click", () => document.getElementById("pushModal").classList.remove("show"));
+    document.getElementById("pushModal").addEventListener("click", (e) => {
+      if (e.target.id === "pushModal") document.getElementById("pushModal").classList.remove("show");
+    });
+    document.getElementById("saveManualReview").addEventListener("click", () => {
+      const note = document.getElementById("manualReviewNote").value.trim();
+      document.getElementById("manualReviewResult").textContent = note
+        ? `已记录人工复盘：${selectedManualFactors.join("、")}。这些因素将进入本门店预测方案的后续样本池。`
+        : `已记录 ${selectedManualFactors.length} 个复盘维度，将进入本门店预测方案的后续样本池。`;
+    });
+
+    renderOverview();
+    renderStore();
+    renderRisk();
+    renderConfirm();
+    renderReview();
+    const initialView = location.hash.replace("#", "");
+    if (initialView && document.getElementById(initialView)) showView(initialView);
+  </script>
+</body>
+</html>
